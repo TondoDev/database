@@ -175,4 +175,37 @@ public class InMemoryDbTest {
 			}
 		}
 	}
+	
+	/**
+	 * DB_CLOSE_DELAY = -1 should prevent deletion of DB when connection to it is closed.
+	 * Actually value means number of second to wait for close DB after last connection to it is closed.
+	 * @throws SQLException 
+	 */
+	@Test
+	public void testConnectionWithDB_CLOSE_DELAY() throws SQLException {
+		try (Connection con = DriverManager.getConnection("jdbc:h2:mem:t1;DB_CLOSE_DELAY=-1;INIT=RUNSCRIPT FROM 'classpath:create.sql'\\;RUNSCRIPT FROM 'classpath:insert.sql'")) {
+			try (PreparedStatement stmt = con.prepareStatement("INSERT INTO PERSON(name, birthdate) VALUES('Optimus', '1988-04-28')")) {
+				stmt.executeUpdate();
+			}
+			
+			// t1 DB now contains 2 rows - one from init scripts one inserted by code 
+			try (PreparedStatement stmt = con.prepareStatement("SELECT COUNT(*) as CNT FROM PERSON")) {
+				ResultSet rs = stmt.executeQuery();
+				assertTrue(rs.next());
+				assertEquals("Another row appeared", 2, rs.getInt("cnt"));
+			}
+		}
+		
+		// create another connection, DB and data should still exist because of DB_CLOSE_DELAY
+		// DB_CLOSE_DELAY is not needed in second connection
+		// insert script provided for more complicated example :)
+		try (Connection con = DriverManager.getConnection("jdbc:h2:mem:t1;INIT=RUNSCRIPT FROM 'classpath:insert.sql'")) {
+			try (PreparedStatement stmt = con.prepareStatement("SELECT COUNT(*) as CNT FROM PERSON")) {
+				ResultSet rs = stmt.executeQuery();
+				assertTrue(rs.next());
+				assertEquals("No data found because closing connection by default remove data fro memory DB", 
+						3, rs.getInt("cnt"));
+			}
+		}
+	}
 }
