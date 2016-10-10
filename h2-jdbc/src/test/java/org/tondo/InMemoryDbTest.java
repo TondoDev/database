@@ -208,4 +208,86 @@ public class InMemoryDbTest {
 			}
 		}
 	}
+	
+	
+	/**
+	 * For private in memory DB applies same rules about closing connection and destroying database 
+	 */
+	@Test
+	public void testPrivateDatabaseSequential() throws SQLException {
+		try (Connection con = DriverManager.getConnection("jdbc:h2:mem:;INIT=RUNSCRIPT FROM 'classpath:create.sql'\\;RUNSCRIPT FROM 'classpath:insert.sql'")) {
+			try (PreparedStatement stmt = con.prepareStatement("SELECT COUNT(*) as CNT FROM PERSON")) {
+				ResultSet rs = stmt.executeQuery();
+				assertTrue(rs.next());
+				assertEquals("One record in DB from insert.sql", 1, rs.getInt("cnt"));
+			}
+			
+			try (PreparedStatement stmt = con.prepareStatement("INSERT INTO PERSON(name, birthdate) VALUES('Optimus', '1988-04-28')")) {
+				stmt.executeUpdate();
+			}
+		}
+		
+		try (Connection con = DriverManager.getConnection("jdbc:h2:mem:")) {
+			try (PreparedStatement stmt = con.prepareStatement("SELECT COUNT(*) as CNT FROM PERSON")) {
+				stmt.executeQuery();
+				fail("JdbcSQLException expected because private db not initialized in this connection");
+			} catch (JdbcSQLException e) {}
+		}
+	}
+	
+	/**
+	 * For private in memory DB DB_CLOSE_DELAY has no effect 
+	 */
+	@Test
+	public void testPrivateDatabaseDB_CLOSE_DELAY() throws SQLException {
+		try (Connection con = DriverManager.getConnection("jdbc:h2:mem:;DB_CLOSE_DELAY=-1;INIT=RUNSCRIPT FROM 'classpath:create.sql'\\;RUNSCRIPT FROM 'classpath:insert.sql'")) {
+			try (PreparedStatement stmt = con.prepareStatement("SELECT COUNT(*) as CNT FROM PERSON")) {
+				ResultSet rs = stmt.executeQuery();
+				assertTrue(rs.next());
+				assertEquals("One record in DB from insert.sql", 1, rs.getInt("cnt"));
+			}
+			
+			try (PreparedStatement stmt = con.prepareStatement("INSERT INTO PERSON(name, birthdate) VALUES('Optimus', '1988-04-28')")) {
+				stmt.executeUpdate();
+			}
+		}
+		
+		try (Connection con = DriverManager.getConnection("jdbc:h2:mem:")) {
+			try (PreparedStatement stmt = con.prepareStatement("SELECT COUNT(*) as CNT FROM PERSON")) {
+				stmt.executeQuery();
+				fail("JdbcSQLException expected because private db not initialized in this connection");
+			} catch (JdbcSQLException e) {}
+		}
+	}
+	
+	/**
+	 * To private DB is possible only one connection either sequential or simultaneous 
+	 */
+	@Test
+	public void testPrivateSimultaneousConnections() throws SQLException {
+		Connection anotherConn = null;
+		
+		try (Connection con = DriverManager.getConnection("jdbc:h2:mem:;INIT=RUNSCRIPT FROM 'classpath:create.sql'\\;RUNSCRIPT FROM 'classpath:insert.sql'")) {
+			try (PreparedStatement stmt = con.prepareStatement("SELECT COUNT(*) as CNT FROM PERSON")) {
+				ResultSet rs = stmt.executeQuery();
+				assertTrue(rs.next());
+				assertEquals("One record in DB from insert.sql", 1, rs.getInt("cnt"));
+			}
+
+			anotherConn = DriverManager.getConnection("jdbc:h2:mem:");
+			try (PreparedStatement stmt = con.prepareStatement("INSERT INTO PERSON(name, birthdate) VALUES('Optimus', '1988-04-28')")) {
+				stmt.executeUpdate();
+			}
+		}
+		
+		if (anotherConn != null) {
+			//Second db connection points to different database, which was not initialized
+			try (PreparedStatement stmt = anotherConn.prepareStatement("SELECT COUNT(*) as CNT FROM PERSON")) {
+				stmt.executeQuery();
+				fail("Second connection should points to another, non-initialized, DB");
+			} catch (JdbcSQLException e) {	}
+			
+			anotherConn.close();
+		}
+	}
 }
