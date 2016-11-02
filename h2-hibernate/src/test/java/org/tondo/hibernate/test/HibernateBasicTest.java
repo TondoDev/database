@@ -20,6 +20,7 @@ public class HibernateBasicTest {
 	
 	@BeforeClass
 	public static void initEntityManagerFactory() {
+		// loads all @Entity classes
 		factory = Persistence.createEntityManagerFactory("h2sample");
 	}
 	
@@ -46,6 +47,8 @@ public class HibernateBasicTest {
 	public void testPersist() {
 		this.manager.getTransaction().begin();
 		this.manager.persist(Person.create("Petrik", 250, 25.87, new Date()));
+		
+		// hibernate will insert data to DB when commit is called
 		System.out.println("before Comm");
 		this.manager.getTransaction().commit();
 		System.out.println("After Comm");
