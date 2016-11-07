@@ -17,7 +17,7 @@ public class OneToOneSecond {
 	private Long id;
 	private BigDecimal secondProp;
 	
-	@OneToOne(fetch = FetchType.LAZY)
+	@OneToOne
 	private OneToOneFirst first;
 
 

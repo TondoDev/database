@@ -4,6 +4,8 @@ import static org.junit.Assert.*;
 
 import java.math.BigDecimal;
 
+import javax.persistence.EntityManager;
+
 import org.junit.Test;
 import org.tondo.hibernate.mappings.OneToOneFirst;
 import org.tondo.hibernate.mappings.OneToOneSecond;
@@ -57,13 +59,26 @@ public class OneToOneMappingTest extends HibernateTestBase {
 		manager.persist(objA);
 		// must be persisted both objects before commit
 		manager.persist(objB);
+		Long objAId = objA.getId();
 		manager.getTransaction().commit();
+		// because we didn't assign it
+		assertNull("Object B is not known for A", objA.getSecond());
 		
-//		assertNotNull(objB.getId());
-//		assertNull(objB.getFirst());
+		OneToOneFirst fromSameManager = manager.find(OneToOneFirst.class, objAId);
+		// object retrieved from cached identity map and doesn't fill relationship
+		assertSame("Object is pulled from cache", objA, fromSameManager);
+		assertNull("Still not filled", fromSameManager.getSecond());
 		
-		manager.getTransaction().begin();
-		OneToOneSecond sec = manager.find(OneToOneSecond.class, objB.getId());
-		System.out.println("-- " + sec.getFirst());
+		EntityManager otherManager = factory.createEntityManager();
+		OneToOneFirst xxx = otherManager.find(OneToOneFirst.class, objAId);
+		assertNotSame("Different manager has different identity cache with different instances", otherManager, objA);
+		assertNotNull("Hibernate provided related object", xxx.getSecond());
+		// !! From DB comes value 10.00 which is in different scale !!
+		assertNotEquals("Big decimal values are in different scale", BigDecimal.TEN, xxx.getSecond().getSecondProp());
+		// numeric comparison
+		assertTrue(BigDecimal.TEN.compareTo(xxx.getSecond().getSecondProp()) == 0);
+		
+		otherManager.close();
+		
 	}
 }

@@ -1,7 +1,6 @@
 package org.tondo.hibernate.mappings;
 
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -15,7 +14,7 @@ public class OneToOneFirst {
 	private Long id;
 	private String firstProp;
 	
-	@OneToOne(fetch = FetchType.LAZY, mappedBy = "first")
+	@OneToOne(mappedBy = "first")
 	private OneToOneSecond second;
 
 	public Long getId() {
