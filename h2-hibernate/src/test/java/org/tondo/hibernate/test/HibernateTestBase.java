@@ -37,4 +37,11 @@ public class HibernateTestBase {
 			this.manager.close();
 		}
 	}
+	
+	protected void recreateManager() {
+		if (this.manager != null) {
+			this.manager.close();
+		}
+		this.manager = factory.createEntityManager();
+	}
 }
