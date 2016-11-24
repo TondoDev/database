@@ -1,4 +1,4 @@
-package org.tondo.hibernate.mappings;
+package org.tondo.hibernate.mappings.otm.bidi;
 
 import java.util.Set;
 
@@ -18,9 +18,7 @@ public class OneToManyMaster {
 	private Long id;
 	private String masterProp;
 	
-	// without this, hibernate will create three tables,
-	// one of which is just for binding ids
-	@OneToMany(fetch = FetchType.LAZY)
+	@OneToMany(fetch = FetchType.LAZY, mappedBy="master")
 	@JoinColumn(name = "id")
 	private Set<OneToManySlave> items;
 	

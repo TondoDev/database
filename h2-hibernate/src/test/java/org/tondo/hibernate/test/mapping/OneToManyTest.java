@@ -1,4 +1,4 @@
-package org.tondo.hibernate.test;
+package org.tondo.hibernate.test.mapping;
 
 import static org.junit.Assert.*;
 
@@ -8,8 +8,9 @@ import java.util.Set;
 import javax.persistence.RollbackException;
 
 import org.junit.Test;
-import org.tondo.hibernate.mappings.OneToManyMaster;
-import org.tondo.hibernate.mappings.OneToManySlave;
+import org.tondo.hibernate.mappings.otm.bidi.OneToManyMaster;
+import org.tondo.hibernate.mappings.otm.bidi.OneToManySlave;
+import org.tondo.hibernate.test.HibernateTestBase;
 
 public class OneToManyTest extends HibernateTestBase {
 	

@@ -1,9 +1,10 @@
-package org.tondo.hibernate.mappings;
+package org.tondo.hibernate.mappings.otm.bidi;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 @Entity
@@ -16,6 +17,17 @@ public class OneToManySlave {
 	@Id
 	private Long id;
 	private int slaveProp;
+	
+	@ManyToOne
+	private OneToManyMaster master;
+	
+	public OneToManyMaster getMaster() {
+		return master;
+	}
+	
+	public void setMaster(OneToManyMaster master) {
+		this.master = master;
+	}
 	
 	// zero arg. constructor for hibernate
 	public OneToManySlave() {}
