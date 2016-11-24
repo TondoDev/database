@@ -39,6 +39,7 @@ public class OneToManyTest extends HibernateTestBase {
 		manager.getTransaction().begin();
 		manager.persist(slave);
 		try {
+			// TODO not true, can be saved without master. why?
 			manager.getTransaction().commit();
 			fail("RollbackException because of foreign key is null");
 		} catch(RollbackException e) {}
@@ -48,19 +49,26 @@ public class OneToManyTest extends HibernateTestBase {
 	public void testSaveTogether() {
 		OneToManyMaster master = new OneToManyMaster();
 		master.setMasterProp("Master master");
-		Set<OneToManySlave> slaves = new HashSet<>();
+
 		OneToManySlave sl = new OneToManySlave(10);
-		slaves.add(sl);
+		sl.setMaster(master);
 		
+		Set<OneToManySlave> slaves = new HashSet<>();
+		slaves.add(sl);
+		master.setItems(slaves);
 		
 		manager.getTransaction().begin();
 		manager.persist(master);
-		master.setItems(slaves);
 		manager.persist(sl);
-	
-		// we need to save all parts
-		
 		manager.getTransaction().commit();
+		
+		assertNotNull(master.getId());
+		recreateManager();
+		
+		OneToManyMaster foundMaster = manager.find(OneToManyMaster.class, master.getId());
+		System.out.println("--");
+		assertEquals(1, foundMaster.getItems().size());
+		
 	}
 
 }
